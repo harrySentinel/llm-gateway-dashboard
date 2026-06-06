@@ -19,8 +19,8 @@ const NAV = [
   { href: "/overview",      label: "Overview",       icon: LayoutDashboard },
   { href: "/logs",          label: "Logs",           icon: ScrollText },
   { href: "/playground",    label: "Playground",     icon: Terminal },
-  { href: "/api-keys",      label: "API Keys",       icon: KeyRound },
   { href: "/provider-keys", label: "Provider Keys",  icon: ShieldCheck },
+  { href: "/api-keys",      label: "API Keys",       icon: KeyRound },
 ];
 
 interface SidebarProps { onClose?: () => void; }

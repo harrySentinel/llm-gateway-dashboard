@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { ExternalLink, Check, Trash2, Plus, ShieldCheck, Loader2 } from "lucide-react";
+import { ExternalLink, Check, Trash2, Plus, ShieldCheck, Loader2, Lock, EyeOff, Database, Server, Shield } from "lucide-react";
 import { api, type ProviderKeyItem } from "@/lib/api";
 import { cn } from "@/lib/utils";
 
@@ -238,10 +238,75 @@ export default function ProviderKeysPage() {
           Bring Your Own Key (BYOK)
         </p>
         <p className="text-xs text-zinc-500 leading-relaxed">
-          Add your Gemini and Groq API keys here. The gateway will use your keys for all requests
-          made with your <code className="font-mono bg-zinc-100 dark:bg-zinc-800 px-1 rounded">gw_</code> keys —
-          you pay the providers directly. Keys are encrypted at rest using AES-128 and never exposed in plaintext after saving.
+          Add your Gemini and Groq API keys here. The gateway uses your keys for all LLM requests —
+          you pay the providers directly at their standard rates. Keys are encrypted at rest and never exposed after saving.
         </p>
+      </div>
+
+      {/* Security notice card */}
+      <div className="rounded-2xl overflow-hidden border border-zinc-200 dark:border-zinc-800">
+        {/* Header */}
+        <div className="flex items-center gap-3 px-5 py-4 bg-gradient-to-r from-zinc-900 to-zinc-800 dark:from-zinc-950 dark:to-zinc-900">
+          <div className="w-8 h-8 rounded-lg bg-cyan-500/20 border border-cyan-500/30 flex items-center justify-center shrink-0">
+            <Shield className="w-4 h-4 text-cyan-400" />
+          </div>
+          <div>
+            <p className="text-sm font-semibold text-white">How your keys are protected</p>
+            <p className="text-[11px] text-zinc-400 mt-0.5">Enterprise-grade security, zero plaintext exposure</p>
+          </div>
+        </div>
+
+        {/* Security features grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-px bg-zinc-200 dark:bg-zinc-800">
+          {[
+            {
+              icon: Lock,
+              color: "text-cyan-500",
+              bg: "bg-cyan-500/10",
+              title: "AES-128 Encryption (Fernet)",
+              desc: "Every key is encrypted using Fernet symmetric encryption before it touches the database. Fernet combines AES-128-CBC with HMAC-SHA256 for authenticated encryption.",
+            },
+            {
+              icon: EyeOff,
+              color: "text-violet-500",
+              bg: "bg-violet-500/10",
+              title: "Never stored in plaintext",
+              desc: "The moment your key arrives at the server it is encrypted. The raw key string is never written to disk, logs, or any persistent storage — only the encrypted blob.",
+            },
+            {
+              icon: Server,
+              color: "text-amber-500",
+              bg: "bg-amber-500/10",
+              title: "Encryption key in Fly.io Secrets",
+              desc: "The master encryption key lives in Fly.io's encrypted secrets vault — completely separate from the database. An attacker with DB access cannot decrypt your keys.",
+            },
+            {
+              icon: Database,
+              color: "text-emerald-500",
+              bg: "bg-emerald-500/10",
+              title: "Masked on retrieval",
+              desc: "After saving, only the first 8 characters are shown (e.g. gsk_AbcD••••••). The full plaintext is never returned by any API endpoint — not even to you.",
+            },
+          ].map(({ icon: Icon, color, bg, title, desc }) => (
+            <div key={title} className="flex gap-3 p-4 bg-white dark:bg-zinc-900">
+              <div className={cn("w-8 h-8 rounded-lg flex items-center justify-center shrink-0 mt-0.5", bg)}>
+                <Icon className={cn("w-4 h-4", color)} />
+              </div>
+              <div>
+                <p className="text-xs font-semibold text-zinc-800 dark:text-zinc-200 mb-1">{title}</p>
+                <p className="text-[11px] text-zinc-500 leading-relaxed">{desc}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Footer badge */}
+        <div className="flex items-center gap-2 px-5 py-3 bg-zinc-50 dark:bg-zinc-900/80 border-t border-zinc-200 dark:border-zinc-800">
+          <ShieldCheck className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+          <p className="text-[11px] text-zinc-500">
+            Your keys are used exclusively to forward your LLM requests. They are never shared, sold, or accessed for any other purpose.
+          </p>
+        </div>
       </div>
 
       {/* Error */}
