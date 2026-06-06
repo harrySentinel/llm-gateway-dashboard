@@ -8,7 +8,6 @@ import {
   type ReactNode,
 } from "react";
 import type { AuthChangeEvent, Session, User } from "@supabase/supabase-js";
-import { createClient } from "@/lib/supabase";
 
 interface AuthContextType {
   user: User | null;
@@ -20,7 +19,7 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType>({
   user: null,
   session: null,
-  loading: true,
+  loading: false,
   signOut: async () => {},
 });
 
@@ -30,29 +29,52 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const supabase = createClient();
+    // Dynamically import so missing env vars never crash the module at parse time
+    import("@/lib/supabase")
+      .then(({ createClient }) => {
+        let supabase: ReturnType<typeof createClient>;
+        try {
+          supabase = createClient();
+        } catch {
+          // Env vars not configured — stay logged out, stop loading
+          setLoading(false);
+          return;
+        }
 
-    void (async () => {
-      const { data } = await supabase.auth.getSession();
-      setSession(data.session);
-      setUser(data.session?.user ?? null);
-      setLoading(false);
-    })();
+        void (async () => {
+          try {
+            const { data } = await supabase.auth.getSession();
+            setSession(data.session);
+            setUser(data.session?.user ?? null);
+          } catch {
+            // Supabase unreachable — treat as unauthenticated
+          } finally {
+            setLoading(false);
+          }
+        })();
 
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event: AuthChangeEvent, session: Session | null) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      setLoading(false);
-    });
+        const {
+          data: { subscription },
+        } = supabase.auth.onAuthStateChange(
+          (_event: AuthChangeEvent, session: Session | null) => {
+            setSession(session);
+            setUser(session?.user ?? null);
+            setLoading(false);
+          },
+        );
 
-    return () => subscription.unsubscribe();
+        return () => subscription.unsubscribe();
+      })
+      .catch(() => setLoading(false));
   }, []);
 
   async function signOut() {
-    const supabase = createClient();
-    await supabase.auth.signOut();
+    try {
+      const { createClient } = await import("@/lib/supabase");
+      await createClient().auth.signOut();
+    } catch {
+      // ignore
+    }
   }
 
   return (
