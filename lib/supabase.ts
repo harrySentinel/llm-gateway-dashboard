@@ -1,31 +1,19 @@
-import { createClient as _createClient } from "@supabase/supabase-js";
+import { createBrowserClient } from "@supabase/ssr";
 
-let _client: ReturnType<typeof _createClient> | null = null;
+let _client: ReturnType<typeof createBrowserClient> | null = null;
 
 export function createClient() {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  // Clean whitespace — Vercel can embed \n in long values on copy-paste
+  const url = (process.env.NEXT_PUBLIC_SUPABASE_URL ?? "").trim();
+  const key = (process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "").replace(/\s/g, "");
 
   if (!url || !key) {
-    throw new Error(
-      `Supabase env vars missing. URL="${url}" KEY="${key ? "set" : "missing"}"`,
-    );
-  }
-
-  // Validate URL before handing to Supabase — surface bad values clearly
-  try {
-    new URL(url);
-  } catch {
-    throw new Error(`NEXT_PUBLIC_SUPABASE_URL is not a valid URL: "${url}"`);
+    throw new Error("Supabase env vars missing — check Vercel environment variables.");
   }
 
   if (!_client) {
-    _client = _createClient(url, key, {
-      auth: {
-        persistSession: true,
-        autoRefreshToken: true,
-      },
-    });
+    // createBrowserClient stores session in cookies, which the middleware can read
+    _client = createBrowserClient(url, key);
   }
   return _client;
 }

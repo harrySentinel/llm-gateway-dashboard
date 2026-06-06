@@ -29,11 +29,9 @@ export default function LoginPage() {
     setError(null);
     setLoading(true);
     try {
-      // Direct REST call — bypasses the broken @supabase/auth-js HTTP client
       const data = await signInDirect(email, password);
 
       if (data.access_token && data.refresh_token) {
-        // Hand off to SDK for session management (setSession is local-only for fresh tokens)
         const supabase = createClient();
         await supabase.auth.setSession({
           access_token: data.access_token,
@@ -45,6 +43,7 @@ export default function LoginPage() {
       router.refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Sign in failed");
+    } finally {
       setLoading(false);
     }
   }
