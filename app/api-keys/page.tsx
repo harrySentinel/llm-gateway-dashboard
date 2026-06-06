@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Link from "next/link";
 import {
   Copy, Check, Plus, Key, Zap, ArrowRight,
   Activity, DollarSign, X, Terminal,
@@ -232,11 +233,12 @@ export default function ApiKeysPage() {
           <Zap className="w-4 h-4 text-cyan-600 dark:text-cyan-400" />
           <p className="text-sm font-semibold text-cyan-900 dark:text-cyan-300">How it works</p>
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
+        <div className="grid grid-cols-1 sm:grid-cols-4 gap-3 mb-4">
           {[
-            { n: "1", title: "Create a key below", desc: "Give it a name like 'production' or 'dev'" },
-            { n: "2", title: "Use it in your app", desc: "Send requests to your gateway with the key as a Bearer token" },
-            { n: "3", title: "Monitor here", desc: "Every call is logged with cost, latency, and token counts" },
+            { n: "1", title: "Add your provider key", desc: "Go to Provider Keys and paste your real Groq or Gemini API key — stored encrypted" },
+            { n: "2", title: "Create a gateway key", desc: "Give it a name like 'production' or 'my-app' — this is what your app sends, NOT your real key" },
+            { n: "3", title: "Use it in your app", desc: "Send the gw_ key as a Bearer token to your gateway URL" },
+            { n: "4", title: "Monitor here", desc: "Every call is logged with cost, latency, tokens, and which provider served it" },
           ].map(s => (
             <div key={s.n} className="flex items-start gap-3">
               <span className="w-6 h-6 rounded-full bg-cyan-200 dark:bg-cyan-800 flex items-center justify-center text-[10px] font-bold text-cyan-700 dark:text-cyan-300 shrink-0">
@@ -286,7 +288,15 @@ export default function ApiKeysPage() {
 
       {/* Create form */}
       <div className="rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5">
-        <p className="text-sm font-semibold text-zinc-900 dark:text-white mb-3">Create a new key</p>
+        <div className="flex items-start justify-between mb-3">
+          <p className="text-sm font-semibold text-zinc-900 dark:text-white">Create a gateway key</p>
+          <Link
+            href="/provider-keys"
+            className="text-xs text-cyan-600 dark:text-cyan-400 hover:underline flex items-center gap-1"
+          >
+            Add provider keys first →
+          </Link>
+        </div>
         <div className="flex gap-2">
           <input
             type="text"
