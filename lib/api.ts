@@ -1,21 +1,8 @@
-/**
- * Gateway API client.
- *
- * Reads two NEXT_PUBLIC_ env vars so the values are available in both
- * Server Components and Client Components (Next.js exposes NEXT_PUBLIC_
- * vars at build time for the browser bundle):
- *
- *   NEXT_PUBLIC_API_URL      — FastAPI base URL, e.g. http://localhost:8000
- *   NEXT_PUBLIC_GATEWAY_KEY  — Bearer token for Authorization header
- *
- * Security note: NEXT_PUBLIC_ vars are embedded in the browser bundle and
- * visible to anyone who inspects the page source. For a private dashboard
- * used only by you this is acceptable. For a multi-tenant product, proxy
- * calls through Next.js Route Handlers and keep the key server-side only.
- */
+import { createClient } from "@/lib/supabase";
 
 const BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
-const KEY = process.env.NEXT_PUBLIC_GATEWAY_KEY ?? "";
+// Used only for /v1/chat — gateway keys issued via POST /v1/keys
+const GW_KEY = process.env.NEXT_PUBLIC_GATEWAY_KEY ?? "";
 
 // ── Shared types matching FastAPI response shapes ─────────────────────────
 
@@ -88,7 +75,7 @@ export interface CreateKeyResponse extends GatewayKey {
 }
 
 export interface DailyStat {
-  date: string;           // "YYYY-MM-DD"
+  date: string; // "YYYY-MM-DD"
   requests: number;
   cost_usd: number;
   avg_latency_ms: number;
@@ -118,33 +105,84 @@ export interface StreamUsage {
 }
 
 export interface StreamCallbacks {
-  /** Called for every text delta that arrives. */
   onToken(token: string): void;
-  /** Called once after the stream closes cleanly. `usage` is null for providers
-   *  that don't embed usage in SSE chunks (e.g. Gemini via our backend). */
   onComplete(usage: StreamUsage | null): void;
-  /** Called on any non-abort network or HTTP error. */
   onError(err: Error): void;
-  /** Pass an AbortSignal to support cancellation. */
   signal?: AbortSignal;
 }
 
-/**
- * POST /v1/chat with stream:true.
- *
- * Uses the Fetch API + ReadableStream — NOT EventSource, which is GET-only.
- *
- * SSE parsing strategy:
- *   - Accumulate raw bytes in a string buffer via TextDecoder({ stream: true })
- *     so multi-byte UTF-8 chars that span chunk boundaries are handled correctly.
- *   - Split on "\n"; keep the last (potentially incomplete) line in the buffer.
- *   - Each "data: " line is a self-contained JSON object (OpenAI chunk format).
- *
- * Abort behaviour:
- *   - AbortError is silently swallowed — the caller decides what to render.
- *   - All callbacks are no-ops after the signal fires; callers can also guard
- *     with `if (signal.aborted) return` inside their own callbacks.
- */
+// ── Auth helpers ──────────────────────────────────────────────────────────
+
+async function getSupabaseToken(): Promise<string> {
+  const supabase = createClient();
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+  if (!session?.access_token) throw new Error("Not authenticated");
+  return session.access_token;
+}
+
+// ── Dashboard API calls (Supabase JWT) ────────────────────────────────────
+
+async function dashboardRequest<T>(
+  path: string,
+  init: RequestInit = {},
+): Promise<T> {
+  const token = await getSupabaseToken();
+  const res = await fetch(`${BASE}${path}`, {
+    ...init,
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+      ...(init.headers ?? {}),
+    },
+  });
+
+  if (!res.ok) {
+    const text = await res.text().catch(() => res.statusText);
+    throw new Error(`${res.status}: ${text}`);
+  }
+
+  return res.json() as Promise<T>;
+}
+
+// ── Chat API calls (gateway gw_ key) ─────────────────────────────────────
+
+async function chatRequest<T>(
+  path: string,
+  init: RequestInit = {},
+): Promise<T> {
+  const res = await fetch(`${BASE}${path}`, {
+    ...init,
+    headers: {
+      "Content-Type": "application/json",
+      ...(GW_KEY ? { Authorization: `Bearer ${GW_KEY}` } : {}),
+      ...(init.headers ?? {}),
+    },
+  });
+
+  if (!res.ok) {
+    const text = await res.text().catch(() => res.statusText);
+    throw new Error(`${res.status}: ${text}`);
+  }
+
+  return res.json() as Promise<T>;
+}
+
+/** Build a query string, omitting undefined values. */
+function qs(
+  params: Record<string, string | number | boolean | undefined>,
+): string {
+  const p = new URLSearchParams();
+  for (const [k, v] of Object.entries(params)) {
+    if (v !== undefined) p.set(k, String(v));
+  }
+  const s = p.toString();
+  return s ? `?${s}` : "";
+}
+
+// ── Streaming (uses gw_ key for /v1/chat) ────────────────────────────────
+
 export async function streamChat(
   body: { model: string; messages: Message[] },
   { onToken, onComplete, onError, signal }: StreamCallbacks,
@@ -155,7 +193,7 @@ export async function streamChat(
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        ...(KEY ? { Authorization: `Bearer ${KEY}` } : {}),
+        ...(GW_KEY ? { Authorization: `Bearer ${GW_KEY}` } : {}),
       },
       body: JSON.stringify({ ...body, stream: true }),
       signal,
@@ -181,10 +219,8 @@ export async function streamChat(
       const { done, value } = await reader.read();
       if (done) break;
 
-      // { stream: true } = don't flush the internal state between calls
       buffer += decoder.decode(value, { stream: true });
 
-      // Split on newline; keep the last (possibly incomplete) line for next round
       const lines = buffer.split("\n");
       buffer = lines.pop() ?? "";
 
@@ -198,10 +234,9 @@ export async function streamChat(
           const chunk = JSON.parse(payload);
           const delta: string | undefined = chunk.choices?.[0]?.delta?.content;
           if (delta) onToken(delta);
-          // Groq sends usage in the last chunk; Gemini does not
           if (chunk.usage) usage = chunk.usage as StreamUsage;
         } catch {
-          // Ignore malformed chunks — partial JSON is not expected but handled
+          // ignore malformed chunks
         }
       }
     }
@@ -215,50 +250,17 @@ export async function streamChat(
   onComplete(usage);
 }
 
-// ── Core fetch wrapper ────────────────────────────────────────────────────
-
-async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
-  const res = await fetch(`${BASE}${path}`, {
-    ...init,
-    headers: {
-      "Content-Type": "application/json",
-      ...(KEY ? { Authorization: `Bearer ${KEY}` } : {}),
-      ...(init.headers ?? {}),
-    },
-  });
-
-  if (!res.ok) {
-    const text = await res.text().catch(() => res.statusText);
-    throw new Error(`${res.status}: ${text}`);
-  }
-
-  return res.json() as Promise<T>;
-}
-
-/** Build a query string, omitting undefined values. */
-function qs(params: Record<string, string | number | boolean | undefined>): string {
-  const p = new URLSearchParams();
-  for (const [k, v] of Object.entries(params)) {
-    if (v !== undefined) p.set(k, String(v));
-  }
-  const s = p.toString();
-  return s ? `?${s}` : "";
-}
-
 // ── Typed API surface ─────────────────────────────────────────────────────
 
 export const api = {
-  /** GET /v1/stats — aggregated cost, latency, requests over a date range. */
   stats(params?: { from_date?: string; to_date?: string }) {
-    return request<StatsResponse>(`/v1/stats${qs(params ?? {})}`);
+    return dashboardRequest<StatsResponse>(`/v1/stats${qs(params ?? {})}`);
   },
 
-  /** GET /v1/stats/daily — one row per calendar day for time-series charts. */
   daily(params?: { from_date?: string; to_date?: string }) {
-    return request<DailyStat[]>(`/v1/stats/daily${qs(params ?? {})}`);
+    return dashboardRequest<DailyStat[]>(`/v1/stats/daily${qs(params ?? {})}`);
   },
 
-  /** GET /v1/logs — paginated request logs with optional filters. */
   logs(params?: {
     from_date?: string;
     to_date?: string;
@@ -268,24 +270,20 @@ export const api = {
     page?: number;
     page_size?: number;
   }) {
-    return request<LogsResponse>(`/v1/logs${qs(params ?? {})}`);
+    return dashboardRequest<LogsResponse>(`/v1/logs${qs(params ?? {})}`);
   },
 
   keys: {
-    /** GET /v1/keys */
-    list: () => request<GatewayKey[]>("/v1/keys"),
-
-    /** POST /v1/keys — returns the plaintext key once. */
+    list: () => dashboardRequest<GatewayKey[]>("/v1/keys"),
     create: (name: string) =>
-      request<CreateKeyResponse>("/v1/keys", {
+      dashboardRequest<CreateKeyResponse>("/v1/keys", {
         method: "POST",
         body: JSON.stringify({ name }),
       }),
   },
 
-  /** POST /v1/chat — non-streaming inference call. */
   chat(body: { model: string; messages: Message[] }) {
-    return request<ChatResponse>("/v1/chat", {
+    return chatRequest<ChatResponse>("/v1/chat", {
       method: "POST",
       body: JSON.stringify(body),
     });

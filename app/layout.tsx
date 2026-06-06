@@ -1,14 +1,18 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
-import { Sidebar } from "@/components/sidebar";
+import { AuthProvider } from "@/contexts/auth";
+import { ClientLayout } from "@/components/client-layout";
 import "./globals.css";
 
 const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
-const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"] });
+const geistMono = Geist_Mono({
+  variable: "--font-geist-mono",
+  subsets: ["latin"],
+});
 
 export const metadata: Metadata = {
   title: "LLM Gateway",
-  description: "Dashboard for the LLM Gateway API",
+  description: "Multi-provider LLM gateway with cost tracking and analytics",
 };
 
 export default function RootLayout({
@@ -19,9 +23,10 @@ export default function RootLayout({
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="flex h-full overflow-hidden bg-white text-gray-900">
-        <Sidebar />
-        <main className="flex-1 overflow-y-auto p-6">{children}</main>
+      <body className="h-full bg-white text-gray-900">
+        <AuthProvider>
+          <ClientLayout>{children}</ClientLayout>
+        </AuthProvider>
       </body>
     </html>
   );

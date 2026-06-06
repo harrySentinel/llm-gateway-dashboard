@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
+import { useAuth } from "@/contexts/auth";
 
 const NAV = [
   { href: "/overview", label: "Overview" },
@@ -12,6 +13,13 @@ const NAV = [
 
 export function Sidebar() {
   const pathname = usePathname();
+  const router = useRouter();
+  const { user, signOut } = useAuth();
+
+  async function handleSignOut() {
+    await signOut();
+    router.push("/login");
+  }
 
   return (
     <aside className="w-52 shrink-0 border-r border-gray-200 flex flex-col h-full">
@@ -40,6 +48,21 @@ export function Sidebar() {
           );
         })}
       </nav>
+
+      {/* User + sign out */}
+      <div className="p-2 border-t border-gray-200 shrink-0">
+        {user && (
+          <div className="px-3 py-1.5 mb-1">
+            <p className="text-xs text-gray-400 truncate">{user.email}</p>
+          </div>
+        )}
+        <button
+          onClick={handleSignOut}
+          className="w-full flex items-center px-3 py-2 rounded-md text-sm text-gray-500 hover:bg-gray-50 hover:text-gray-900 transition-colors text-left"
+        >
+          Sign out
+        </button>
+      </div>
     </aside>
   );
 }
