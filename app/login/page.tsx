@@ -8,6 +8,7 @@ import { motion } from "motion/react";
 import { CursorSpotlight } from "@/components/ui/cursor-spotlight";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { signInDirect } from "@/lib/auth-direct";
 import { createClient } from "@/lib/supabase";
 
 const item = { hidden: { y: 16, opacity: 0 }, visible: { y: 0, opacity: 1 } };
@@ -28,9 +29,18 @@ export default function LoginPage() {
     setError(null);
     setLoading(true);
     try {
-      const supabase = createClient();
-      const { error: authError } = await supabase.auth.signInWithPassword({ email, password });
-      if (authError) throw new Error(authError.message);
+      // Direct REST call — bypasses the broken @supabase/auth-js HTTP client
+      const data = await signInDirect(email, password);
+
+      if (data.access_token && data.refresh_token) {
+        // Hand off to SDK for session management (setSession is local-only for fresh tokens)
+        const supabase = createClient();
+        await supabase.auth.setSession({
+          access_token: data.access_token,
+          refresh_token: data.refresh_token,
+        });
+      }
+
       router.push("/overview");
       router.refresh();
     } catch (err) {
@@ -41,10 +51,8 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen flex relative overflow-hidden bg-[#080808]">
-      {/* Cursor spotlight — spans full page */}
       <CursorSpotlight />
 
-      {/* Subtle dot grid */}
       <div
         className="pointer-events-none absolute inset-0 z-[2] opacity-25"
         style={{
@@ -53,7 +61,7 @@ export default function LoginPage() {
         }}
       />
 
-      {/* ── Left panel: form ─────────────────────────── */}
+      {/* Left panel */}
       <div className="relative z-30 w-full md:w-1/2 flex flex-col items-center justify-center px-8 py-12 md:px-14">
         <motion.div
           variants={container}
@@ -61,14 +69,12 @@ export default function LoginPage() {
           animate="visible"
           className="w-full max-w-sm"
         >
-          {/* Logo */}
           <motion.div variants={item} className="mb-10">
             <Link href="/" className="text-base font-semibold text-white tracking-tight">
               LLM Gateway
             </Link>
           </motion.div>
 
-          {/* Heading */}
           <motion.div variants={item} className="mb-8">
             <h1 className="text-2xl font-semibold text-white">Welcome back</h1>
             <p className="text-sm text-white/40 mt-1">Sign in to your dashboard</p>
@@ -135,7 +141,7 @@ export default function LoginPage() {
         </motion.div>
       </div>
 
-      {/* ── Right panel: image ────────────────────────── */}
+      {/* Right panel */}
       <div className="hidden md:block relative w-1/2 shrink-0">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
@@ -143,7 +149,6 @@ export default function LoginPage() {
           alt="Technology background"
           className="absolute inset-0 h-full w-full object-cover"
         />
-        {/* Blend left edge into the dark panel */}
         <div className="absolute inset-0 bg-gradient-to-r from-[#080808] via-transparent to-transparent w-1/3" />
         <div className="absolute inset-0 bg-black/30" />
       </div>

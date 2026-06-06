@@ -8,6 +8,7 @@ import { motion } from "motion/react";
 import { CursorSpotlight } from "@/components/ui/cursor-spotlight";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { signUpDirect } from "@/lib/auth-direct";
 import { createClient } from "@/lib/supabase";
 
 const item = { hidden: { y: 16, opacity: 0 }, visible: { y: 0, opacity: 1 } };
@@ -29,14 +30,20 @@ export default function SignupPage() {
     setError(null);
     setLoading(true);
     try {
-      const supabase = createClient();
-      const { data, error: authError } = await supabase.auth.signUp({ email, password });
-      if (authError) throw new Error(authError.message);
-      if (data.session) {
+      const data = await signUpDirect(email, password);
+
+      if (data.access_token && data.refresh_token) {
+        const supabase = createClient();
+        await supabase.auth.setSession({
+          access_token: data.access_token,
+          refresh_token: data.refresh_token,
+        });
         router.push("/overview");
         router.refresh();
         return;
       }
+
+      // No session returned — email confirmation required
       setDone(true);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Sign up failed");
