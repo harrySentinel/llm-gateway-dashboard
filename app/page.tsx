@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { PremiumHero } from "@/components/ui/hero";
 
 const FEATURES = [
   {
@@ -25,84 +26,36 @@ const FEATURES = [
 
 export default function LandingPage() {
   return (
-    <div className="min-h-screen bg-white flex flex-col">
-      {/* Header */}
-      <header className="border-b border-gray-200 px-6 py-4 flex items-center justify-between shrink-0">
-        <span className="font-semibold text-gray-900 tracking-tight">
-          LLM Gateway
-        </span>
-        <div className="flex items-center gap-3">
-          <Link
-            href="/login"
-            className="text-sm text-gray-600 hover:text-gray-900 transition-colors"
-          >
-            Sign in
-          </Link>
-          <Link
-            href="/signup"
-            className="text-sm bg-gray-900 text-white px-4 py-2 rounded-lg hover:bg-gray-800 transition-colors"
-          >
-            Get started
-          </Link>
-        </div>
-      </header>
-
-      {/* Hero */}
-      <section className="flex-1 flex flex-col items-center justify-center px-6 py-24 text-center">
-        <div className="inline-flex items-center gap-2 bg-gray-100 text-gray-600 text-xs px-3 py-1.5 rounded-full mb-6 font-medium">
-          <span className="w-1.5 h-1.5 rounded-full bg-green-500 inline-block" />
-          Gemini · Groq · more coming soon
-        </div>
-
-        <h1 className="text-5xl font-bold text-gray-900 leading-tight mb-5 max-w-2xl">
-          Your own LLM Gateway
-        </h1>
-
-        <p className="text-lg text-gray-500 mb-10 max-w-xl leading-relaxed">
-          A self-hosted proxy that routes LLM requests across providers, handles
-          failover automatically, and gives you full observability — cost, latency,
-          and usage per API key.
-        </p>
-
-        <div className="flex items-center gap-4">
-          <Link
-            href="/signup"
-            className="bg-gray-900 text-white px-6 py-3 rounded-lg text-sm font-medium hover:bg-gray-800 transition-colors"
-          >
-            Get started →
-          </Link>
-          <Link
-            href="/login"
-            className="text-sm text-gray-500 hover:text-gray-900 transition-colors"
-          >
-            Already have an account
-          </Link>
-        </div>
-      </section>
+    <div className="min-h-screen bg-[#0a0a0a] flex flex-col">
+      {/* Animated hero — full viewport height */}
+      <PremiumHero />
 
       {/* Features */}
-      <section className="px-6 pb-24 max-w-4xl mx-auto w-full">
+      <section className="px-6 py-24 max-w-4xl mx-auto w-full">
+        <p className="text-gray-500 text-xs uppercase tracking-widest mb-10 font-medium text-center">
+          Everything you need
+        </p>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
           {FEATURES.map((f) => (
             <div
               key={f.title}
-              className="border border-gray-200 rounded-xl p-6 hover:border-gray-300 transition-colors"
+              className="border border-white/10 rounded-xl p-6 bg-white/5 hover:border-white/20 transition-colors"
             >
               <div className="text-2xl mb-3">{f.icon}</div>
-              <h3 className="font-semibold text-gray-900 mb-1.5">{f.title}</h3>
-              <p className="text-sm text-gray-500 leading-relaxed">{f.desc}</p>
+              <h3 className="font-semibold text-white mb-1.5">{f.title}</h3>
+              <p className="text-sm text-gray-400 leading-relaxed">{f.desc}</p>
             </div>
           ))}
         </div>
       </section>
 
       {/* Code block */}
-      <section className="bg-gray-950 py-16 px-6 shrink-0">
+      <section className="border-t border-white/10 py-20 px-6">
         <div className="max-w-2xl mx-auto">
-          <p className="text-gray-400 text-xs uppercase tracking-widest mb-4 font-medium">
+          <p className="text-gray-500 text-xs uppercase tracking-widest mb-6 font-medium">
             Drop-in API
           </p>
-          <pre className="text-sm font-mono leading-relaxed overflow-x-auto">
+          <pre className="text-sm font-mono leading-relaxed overflow-x-auto bg-white/5 border border-white/10 rounded-xl p-6">
             <span className="text-gray-500">{"// same shape as OpenAI — just change the URL\n"}</span>
             <span className="text-blue-400">{"const "}</span>
             <span className="text-white">{"res = "}</span>
@@ -134,10 +87,10 @@ export default function LandingPage() {
       </section>
 
       {/* Footer */}
-      <footer className="border-t border-gray-200 px-6 py-5 flex items-center justify-between text-xs text-gray-400 shrink-0">
+      <footer className="border-t border-white/10 px-6 py-6 flex items-center justify-between text-xs text-gray-500 mt-auto">
         <span>LLM Gateway</span>
-        <Link href="/login" className="hover:text-gray-600 transition-colors">
-          Sign in →
+        <Link href="/signup" className="hover:text-gray-300 transition-colors">
+          Get started →
         </Link>
       </footer>
     </div>
