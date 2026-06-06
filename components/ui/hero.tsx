@@ -3,13 +3,15 @@
 import { useEffect, useState } from "react";
 import { motion } from "motion/react";
 import Link from "next/link";
-import { MoveRight, Zap } from "lucide-react";
+import { MoveRight, Zap, PlayCircle } from "lucide-react";
 import { BeamBackground } from "@/components/ui/beam-background";
+import { HowItWorksModal } from "@/components/ui/how-it-works-modal";
 
 const words = ["intelligently", "reliably", "efficiently", "at scale", "securely"];
 
 export function PremiumHero() {
   const [wordIndex, setWordIndex] = useState(0);
+  const [modalOpen, setModalOpen] = useState(false);
 
   useEffect(() => {
     const t = setInterval(() => setWordIndex((p) => (p + 1) % words.length), 2500);
@@ -68,14 +70,25 @@ export function PremiumHero() {
             automatic failover, per-key cost tracking, and full observability.
           </p>
 
-          <Link
-            href="/signup"
-            className="inline-flex items-center gap-2 rounded-lg border border-white/20 bg-white/10 px-5 py-2.5 text-sm font-medium text-white backdrop-blur-sm hover:bg-white/20 transition-colors"
-          >
-            Get started free <MoveRight className="w-4 h-4" />
-          </Link>
+          <div className="flex flex-col sm:flex-row items-center gap-3">
+            <Link
+              href="/signup"
+              className="inline-flex items-center gap-2 rounded-lg bg-cyan-500 px-5 py-2.5 text-sm font-semibold text-black hover:bg-cyan-400 transition-colors"
+            >
+              Get started free <MoveRight className="w-4 h-4" />
+            </Link>
+            <button
+              onClick={() => setModalOpen(true)}
+              className="inline-flex items-center gap-2 rounded-lg border border-white/20 bg-white/5 px-5 py-2.5 text-sm font-medium text-white backdrop-blur-sm hover:bg-white/10 transition-colors"
+            >
+              <PlayCircle className="w-4 h-4" />
+              See how it works
+            </button>
+          </div>
         </div>
       </div>
+
+      <HowItWorksModal open={modalOpen} onClose={() => setModalOpen(false)} />
     </div>
   );
 }
