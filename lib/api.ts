@@ -114,12 +114,21 @@ export interface StreamCallbacks {
 // ── Auth helpers ──────────────────────────────────────────────────────────
 
 async function getSupabaseToken(): Promise<string> {
-  const supabase = createClient();
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
-  if (!session?.access_token) throw new Error("Not authenticated");
-  return session.access_token;
+  try {
+    const supabase = createClient();
+    // Race against a 6s timeout — prevents infinite skeleton on cold Fly.io starts
+    const result = await Promise.race([
+      supabase.auth.getSession(),
+      new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error("Auth timeout — please refresh")), 6000),
+      ),
+    ]);
+    const { data: { session } } = result;
+    if (session?.access_token) return session.access_token;
+  } catch (e) {
+    throw e instanceof Error ? e : new Error("Not authenticated");
+  }
+  throw new Error("Session expired — please sign in again");
 }
 
 // ── Dashboard API calls (Supabase JWT) ────────────────────────────────────
