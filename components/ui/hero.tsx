@@ -21,17 +21,14 @@ interface Beam {
 
 function createBeam(width: number, height: number, layer: number): Beam {
   const angle = -35 + Math.random() * 10;
-  const baseSpeed = 0.2 + layer * 0.2;
-  const baseOpacity = 0.08 + layer * 0.05;
-  const baseWidth = 10 + layer * 5;
   return {
     x: Math.random() * width,
     y: Math.random() * height,
-    width: baseWidth,
+    width: 10 + layer * 5,
     length: height * 2.5,
     angle,
-    speed: baseSpeed + Math.random() * 0.2,
-    opacity: baseOpacity + Math.random() * 0.1,
+    speed: 0.2 + layer * 0.2 + Math.random() * 0.2,
+    opacity: 0.08 + layer * 0.05 + Math.random() * 0.1,
     pulse: Math.random() * Math.PI * 2,
     pulseSpeed: 0.01 + Math.random() * 0.015,
     layer,
@@ -39,8 +36,6 @@ function createBeam(width: number, height: number, layer: number): Beam {
 }
 
 const LAYERS = 3;
-const BEAMS_PER_LAYER = 8;
-
 const words = ["intelligently", "reliably", "efficiently", "at scale", "securely"];
 
 export function PremiumHero() {
@@ -48,6 +43,8 @@ export function PremiumHero() {
   const noiseRef = useRef<HTMLCanvasElement>(null);
   const beamsRef = useRef<Beam[]>([]);
   const animationFrameRef = useRef<number>(0);
+  const isMobileRef = useRef(false);
+  const frameCountRef = useRef(0);
   const [wordIndex, setWordIndex] = useState(0);
 
   useEffect(() => {
@@ -55,28 +52,33 @@ export function PremiumHero() {
     const noiseCanvas = noiseRef.current;
     if (!canvas || !noiseCanvas) return;
     const ctx = canvas.getContext("2d");
-    const nCtx = noiseCanvas.getContext("2d");
+    // willReadFrequently: false — we only write, never read back
+    const nCtx = noiseCanvas.getContext("2d", { willReadFrequently: false });
     if (!ctx || !nCtx) return;
 
     const resizeCanvas = () => {
-      const dpr = window.devicePixelRatio || 1;
-      canvas.width = window.innerWidth * dpr;
-      canvas.height = window.innerHeight * dpr;
-      canvas.style.width = `${window.innerWidth}px`;
-      canvas.style.height = `${window.innerHeight}px`;
+      const mobile = window.innerWidth < 768;
+      isMobileRef.current = mobile;
+
+      // Cap DPR: mobile phones can be 3× — no visible gain past 1.5 on canvas
+      const dpr = Math.min(window.devicePixelRatio || 1, mobile ? 1 : 2);
+
+      for (const cvs of [canvas, noiseCanvas]) {
+        cvs.width = window.innerWidth * dpr;
+        cvs.height = window.innerHeight * dpr;
+        cvs.style.width = `${window.innerWidth}px`;
+        cvs.style.height = `${window.innerHeight}px`;
+      }
       ctx.setTransform(1, 0, 0, 1, 0, 0);
       ctx.scale(dpr, dpr);
-
-      noiseCanvas.width = window.innerWidth * dpr;
-      noiseCanvas.height = window.innerHeight * dpr;
-      noiseCanvas.style.width = `${window.innerWidth}px`;
-      noiseCanvas.style.height = `${window.innerHeight}px`;
       nCtx.setTransform(1, 0, 0, 1, 0, 0);
       nCtx.scale(dpr, dpr);
 
+      // Fewer beams on mobile: reduces per-frame draw calls significantly
+      const beamsPerLayer = mobile ? 3 : 8;
       beamsRef.current = [];
       for (let layer = 1; layer <= LAYERS; layer++) {
-        for (let i = 0; i < BEAMS_PER_LAYER; i++) {
+        for (let i = 0; i < beamsPerLayer; i++) {
           beamsRef.current.push(
             createBeam(window.innerWidth, window.innerHeight, layer),
           );
@@ -116,7 +118,10 @@ export function PremiumHero() {
       gradient.addColorStop(1, `rgba(0,255,255,0)`);
 
       ctx.fillStyle = gradient;
-      ctx.filter = `blur(${2 + beam.layer * 2}px)`;
+      // ctx.filter is the single most expensive op on mobile — skip it
+      if (!isMobileRef.current) {
+        ctx.filter = `blur(${2 + beam.layer * 2}px)`;
+      }
       ctx.fillRect(-beam.width / 2, 0, beam.width, beam.length);
       ctx.restore();
     };
@@ -124,10 +129,12 @@ export function PremiumHero() {
     const animate = () => {
       if (!canvas || !ctx) return;
 
-      const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
-      gradient.addColorStop(0, "#050505");
-      gradient.addColorStop(1, "#111111");
-      ctx.fillStyle = gradient;
+      frameCountRef.current += 1;
+
+      const bg = ctx.createLinearGradient(0, 0, 0, canvas.height);
+      bg.addColorStop(0, "#050505");
+      bg.addColorStop(1, "#111111");
+      ctx.fillStyle = bg;
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
       beamsRef.current.forEach((beam) => {
@@ -140,7 +147,10 @@ export function PremiumHero() {
         drawBeam(beam);
       });
 
-      generateNoise();
+      // Noise every 4 frames on desktop, every 8 on mobile — imperceptible difference
+      const noiseEvery = isMobileRef.current ? 8 : 4;
+      if (frameCountRef.current % noiseEvery === 0) generateNoise();
+
       animationFrameRef.current = requestAnimationFrame(animate);
     };
 
@@ -164,7 +174,7 @@ export function PremiumHero() {
       <canvas ref={noiseRef} className="absolute inset-0 z-0 pointer-events-none" />
       <canvas ref={canvasRef} className="absolute inset-0 z-10" />
 
-      {/* Top nav inside hero */}
+      {/* Top nav */}
       <div className="absolute top-0 left-0 right-0 z-30 flex items-center justify-between px-6 py-5">
         <span className="text-sm font-semibold text-white/90 tracking-tight">
           LLM Gateway
@@ -179,8 +189,7 @@ export function PremiumHero() {
 
       {/* Hero content */}
       <div className="relative z-20 flex h-screen w-full items-center justify-center px-6 text-center">
-        <div className="flex flex-col items-center gap-10 max-w-3xl">
-
+        <div className="flex flex-col items-center gap-8 max-w-3xl">
           {/* Badge */}
           <Button variant="secondary" size="sm" className="gap-2 pointer-events-none">
             <Zap className="w-3.5 h-3.5 text-cyan-400" />
@@ -190,7 +199,7 @@ export function PremiumHero() {
           {/* Headline */}
           <h1 className="text-5xl md:text-7xl tracking-tighter font-semibold leading-tight">
             <span className="text-white">Route AI calls</span>
-            <span className="relative flex w-full justify-center overflow-hidden md:pb-4 md:pt-1">
+            <span className="relative flex w-full justify-center overflow-hidden pb-2 pt-1">
               &nbsp;
               {words.map((word, index) => (
                 <motion.span
@@ -211,10 +220,9 @@ export function PremiumHero() {
           </h1>
 
           {/* Description */}
-          <p className="text-lg md:text-xl leading-relaxed tracking-tight text-white/50 max-w-xl">
-            A self-hosted proxy that routes LLM requests across Gemini and Groq
-            with automatic failover, API key management, and full cost
-            observability — all in your dashboard.
+          <p className="text-base md:text-lg leading-relaxed text-white/50 max-w-lg">
+            A self-hosted proxy that routes LLM requests across providers with
+            automatic failover, per-key cost tracking, and full observability.
           </p>
 
           {/* CTA */}
