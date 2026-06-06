@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/auth";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 const NAV = [
   { href: "/overview", label: "Overview" },
@@ -22,10 +23,12 @@ export function Sidebar() {
   }
 
   return (
-    <aside className="w-52 shrink-0 border-r border-gray-200 flex flex-col h-full">
+    <aside className="w-52 shrink-0 border-r border-border flex flex-col h-full bg-background">
       {/* Brand */}
-      <div className="h-14 flex items-center px-4 border-b border-gray-200 shrink-0">
-        <span className="text-sm font-semibold tracking-tight">LLM Gateway</span>
+      <div className="h-14 flex items-center px-4 border-b border-border shrink-0">
+        <span className="text-sm font-semibold tracking-tight text-foreground">
+          LLM Gateway
+        </span>
       </div>
 
       {/* Nav */}
@@ -39,8 +42,8 @@ export function Sidebar() {
               className={[
                 "flex items-center px-3 py-2 rounded-md text-sm transition-colors",
                 active
-                  ? "bg-gray-100 text-gray-900 font-medium"
-                  : "text-gray-500 hover:bg-gray-50 hover:text-gray-900",
+                  ? "bg-accent text-accent-foreground font-medium"
+                  : "text-muted-foreground hover:bg-accent hover:text-accent-foreground",
               ].join(" ")}
             >
               {label}
@@ -49,16 +52,19 @@ export function Sidebar() {
         })}
       </nav>
 
-      {/* User + sign out */}
-      <div className="p-2 border-t border-gray-200 shrink-0">
-        {user && (
-          <div className="px-3 py-1.5 mb-1">
-            <p className="text-xs text-gray-400 truncate">{user.email}</p>
-          </div>
-        )}
+      {/* Footer: theme toggle + user + sign out */}
+      <div className="p-2 border-t border-border shrink-0 space-y-1">
+        <div className="flex items-center justify-between px-3 py-1">
+          {user && (
+            <p className="text-xs text-muted-foreground truncate flex-1 mr-2">
+              {user.email}
+            </p>
+          )}
+          <ThemeToggle />
+        </div>
         <button
           onClick={handleSignOut}
-          className="w-full flex items-center px-3 py-2 rounded-md text-sm text-gray-500 hover:bg-gray-50 hover:text-gray-900 transition-colors text-left"
+          className="w-full flex items-center px-3 py-2 rounded-md text-sm text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors text-left"
         >
           Sign out
         </button>

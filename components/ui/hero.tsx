@@ -3,7 +3,6 @@
 import { useEffect, useRef, useState } from "react";
 import { motion } from "motion/react";
 import Link from "next/link";
-import { Button } from "@/components/ui/button";
 import { MoveRight, Zap } from "lucide-react";
 
 interface Beam {
@@ -191,10 +190,10 @@ export function PremiumHero() {
       <div className="relative z-20 flex h-screen w-full items-center justify-center px-6 text-center">
         <div className="flex flex-col items-center gap-8 max-w-3xl">
           {/* Badge */}
-          <Button variant="secondary" size="sm" className="gap-2 pointer-events-none">
+          <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/10 px-3 py-1.5 text-xs font-medium text-white/70 backdrop-blur-sm">
             <Zap className="w-3.5 h-3.5 text-cyan-400" />
             Gemini · Groq · more providers coming
-          </Button>
+          </div>
 
           {/* Headline */}
           <h1 className="text-5xl md:text-7xl tracking-tighter font-semibold leading-tight">
@@ -226,11 +225,12 @@ export function PremiumHero() {
           </p>
 
           {/* CTA */}
-          <Button size="default" variant="outline" asChild>
-            <Link href="/signup">
-              Get started free <MoveRight className="w-4 h-4" />
-            </Link>
-          </Button>
+          <Link
+            href="/signup"
+            className="inline-flex items-center gap-2 rounded-lg border border-white/20 bg-white/10 px-5 py-2.5 text-sm font-medium text-white backdrop-blur-sm hover:bg-white/20 transition-colors"
+          >
+            Get started free <MoveRight className="w-4 h-4" />
+          </Link>
         </div>
       </div>
     </div>

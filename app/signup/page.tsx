@@ -1,8 +1,13 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
+import { motion } from "motion/react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { Loader2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { createClient } from "@/lib/supabase";
 
 export default function SignupPage() {
@@ -17,42 +22,41 @@ export default function SignupPage() {
     e.preventDefault();
     setError(null);
     setLoading(true);
-
     const supabase = createClient();
     const { data, error } = await supabase.auth.signUp({ email, password });
-
     if (error) {
       setError(error.message);
       setLoading(false);
       return;
     }
-
-    // If email confirmation is disabled, the session is returned immediately.
     if (data.session) {
       router.push("/overview");
       router.refresh();
       return;
     }
-
-    // Email confirmation required — tell the user to check their inbox.
     setDone(true);
     setLoading(false);
   }
 
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: { opacity: 1, transition: { staggerChildren: 0.08 } },
+  };
+  const itemVariants = { hidden: { y: 16, opacity: 0 }, visible: { y: 0, opacity: 1 } };
+
   if (done) {
     return (
-      <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center px-4">
-        <div className="w-full max-w-sm text-center">
-          <div className="text-3xl mb-4">📬</div>
-          <h2 className="text-lg font-semibold text-gray-900 mb-2">Check your email</h2>
-          <p className="text-sm text-gray-500 mb-6">
+      <div className="min-h-screen bg-background flex items-center justify-center px-4">
+        <div className="w-full max-w-md text-center flex flex-col items-center gap-4">
+          <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center text-2xl">
+            📬
+          </div>
+          <h2 className="text-lg font-semibold text-foreground">Check your email</h2>
+          <p className="text-sm text-muted-foreground">
             We sent a confirmation link to <strong>{email}</strong>. Click it to
             activate your account, then come back to sign in.
           </p>
-          <Link
-            href="/login"
-            className="text-sm text-gray-900 font-medium hover:underline"
-          >
+          <Link href="/login" className="text-sm font-medium text-foreground hover:underline">
             Back to sign in →
           </Link>
         </div>
@@ -61,70 +65,97 @@ export default function SignupPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center px-4">
-      <div className="w-full max-w-sm">
-        {/* Logo */}
-        <div className="text-center mb-8">
-          <Link href="/" className="text-lg font-semibold text-gray-900 tracking-tight">
-            LLM Gateway
-          </Link>
-          <p className="text-sm text-gray-500 mt-1">Create your account</p>
-        </div>
+    <div className="relative flex min-h-screen w-full flex-col md:flex-row">
+      {/* Left panel */}
+      <div className="flex w-full flex-col items-center justify-center bg-background p-8 md:w-1/2">
+        <div className="w-full max-w-md">
+          <motion.div
+            variants={containerVariants}
+            initial="hidden"
+            animate="visible"
+            className="flex flex-col gap-6"
+          >
+            <motion.div variants={itemVariants}>
+              <span className="text-xl font-semibold tracking-tight text-foreground">
+                LLM Gateway
+              </span>
+            </motion.div>
 
-        {/* Card */}
-        <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm">
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                Email
-              </label>
-              <input
-                type="email"
-                required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="you@example.com"
-                className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent transition-shadow"
-              />
-            </div>
+            <motion.div variants={itemVariants}>
+              <h1 className="text-2xl font-semibold tracking-tight text-foreground">
+                Create an account
+              </h1>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Get started with your own LLM Gateway
+              </p>
+            </motion.div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                Password
-              </label>
-              <input
-                type="password"
-                required
-                minLength={6}
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="Min. 6 characters"
-                className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent transition-shadow"
-              />
-            </div>
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <motion.div variants={itemVariants} className="space-y-2">
+                <Label htmlFor="email">Email address</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="you@example.com"
+                  disabled={loading}
+                />
+              </motion.div>
 
-            {error && (
-              <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2.5 text-sm text-red-700">
-                {error}
-              </div>
-            )}
+              <motion.div variants={itemVariants} className="space-y-2">
+                <Label htmlFor="password">Password</Label>
+                <Input
+                  id="password"
+                  type="password"
+                  required
+                  minLength={6}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="Min. 6 characters"
+                  disabled={loading}
+                />
+              </motion.div>
 
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full bg-gray-900 text-white text-sm font-medium py-2.5 rounded-lg hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              {error && (
+                <motion.div variants={itemVariants}>
+                  <div className="rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2.5 text-sm text-destructive">
+                    {error}
+                  </div>
+                </motion.div>
+              )}
+
+              <motion.div variants={itemVariants}>
+                <Button type="submit" className="w-full" disabled={loading}>
+                  {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  Create account
+                </Button>
+              </motion.div>
+            </form>
+
+            <motion.p
+              variants={itemVariants}
+              className="text-center text-sm text-muted-foreground"
             >
-              {loading ? "Creating account…" : "Create account"}
-            </button>
-          </form>
+              Already have an account?{" "}
+              <Link href="/login" className="font-medium text-foreground hover:underline">
+                Sign in
+              </Link>
+            </motion.p>
+          </motion.div>
         </div>
+      </div>
 
-        <p className="text-center text-sm text-gray-500 mt-5">
-          Already have an account?{" "}
-          <Link href="/login" className="text-gray-900 font-medium hover:underline">
-            Sign in
-          </Link>
-        </p>
+      {/* Right panel — image */}
+      <div className="relative hidden md:block md:w-1/2">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=900&q=80"
+          alt="Circuit board technology"
+          className="h-full w-full object-cover"
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
       </div>
     </div>
   );
