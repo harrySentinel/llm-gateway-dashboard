@@ -1,6 +1,6 @@
-import { createBrowserClient } from "@supabase/ssr";
+import { createClient as _createClient } from "@supabase/supabase-js";
 
-let _client: ReturnType<typeof createBrowserClient> | null = null;
+let _client: ReturnType<typeof _createClient> | null = null;
 
 export function createClient() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -8,13 +8,24 @@ export function createClient() {
 
   if (!url || !key) {
     throw new Error(
-      "NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY must be set. " +
-        "Add them in Vercel → Project Settings → Environment Variables.",
+      `Supabase env vars missing. URL="${url}" KEY="${key ? "set" : "missing"}"`,
     );
   }
 
+  // Validate URL before handing to Supabase — surface bad values clearly
+  try {
+    new URL(url);
+  } catch {
+    throw new Error(`NEXT_PUBLIC_SUPABASE_URL is not a valid URL: "${url}"`);
+  }
+
   if (!_client) {
-    _client = createBrowserClient(url, key);
+    _client = _createClient(url, key, {
+      auth: {
+        persistSession: true,
+        autoRefreshToken: true,
+      },
+    });
   }
   return _client;
 }
