@@ -169,16 +169,12 @@ export function PremiumHero() {
         <span className="text-sm font-semibold text-white/90 tracking-tight">
           LLM Gateway
         </span>
-        <div className="flex items-center gap-3">
-          <Button variant="secondary" size="sm" asChild>
-            <Link href="/login">Sign in</Link>
-          </Button>
-          <Button variant="outline" size="sm" asChild>
-            <Link href="/signup">
-              Get started <MoveRight className="w-3.5 h-3.5" />
-            </Link>
-          </Button>
-        </div>
+        <Link
+          href="/login"
+          className="text-sm text-white/50 hover:text-white/90 transition-colors"
+        >
+          Sign in
+        </Link>
       </div>
 
       {/* Hero content */}
@@ -221,17 +217,12 @@ export function PremiumHero() {
             observability — all in your dashboard.
           </p>
 
-          {/* CTAs */}
-          <div className="flex flex-row gap-3 flex-wrap justify-center">
-            <Button size="default" variant="outline" asChild>
-              <Link href="/signup">
-                Get started free <MoveRight className="w-4 h-4" />
-              </Link>
-            </Button>
-            <Button size="default" variant="secondary" asChild>
-              <Link href="/login">Sign in →</Link>
-            </Button>
-          </div>
+          {/* CTA */}
+          <Button size="default" variant="outline" asChild>
+            <Link href="/signup">
+              Get started free <MoveRight className="w-4 h-4" />
+            </Link>
+          </Button>
         </div>
       </div>
     </div>
