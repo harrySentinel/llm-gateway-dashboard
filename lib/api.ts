@@ -74,6 +74,12 @@ export interface CreateKeyResponse extends GatewayKey {
   key: string; // plaintext — shown once by the backend, never retrievable again
 }
 
+export interface ProviderKeyItem {
+  provider: string;
+  masked_key: string;
+  created_at: string;
+}
+
 export interface DailyStat {
   date: string; // "YYYY-MM-DD"
   requests: number;
@@ -289,6 +295,17 @@ export const api = {
         method: "POST",
         body: JSON.stringify({ name }),
       }),
+  },
+
+  providerKeys: {
+    list: () => dashboardRequest<ProviderKeyItem[]>("/v1/provider-keys"),
+    save: (provider: string, api_key: string) =>
+      dashboardRequest<{ message: string }>("/v1/provider-keys", {
+        method: "POST",
+        body: JSON.stringify({ provider, api_key }),
+      }),
+    remove: (provider: string) =>
+      dashboardRequest<void>(`/v1/provider-keys/${provider}`, { method: "DELETE" }),
   },
 
   chat(body: { model: string; messages: Message[] }) {

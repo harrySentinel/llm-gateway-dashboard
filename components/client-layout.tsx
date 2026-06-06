@@ -41,10 +41,10 @@ export function ClientLayout({ children }: { children: React.ReactNode }) {
       <div className="flex flex-col flex-1 overflow-hidden">
 
         {/* Mobile top bar */}
-        <div className="md:hidden flex items-center gap-3 h-14 px-4 bg-zinc-950 border-b border-white/[0.07] shrink-0">
+        <div className="md:hidden flex items-center gap-3 h-14 px-4 bg-white dark:bg-zinc-950 border-b border-zinc-200 dark:border-white/[0.07] shrink-0">
           <button
             onClick={() => setOpen(true)}
-            className="p-1.5 rounded-lg text-zinc-400 hover:bg-white/10 hover:text-white transition-colors"
+            className="p-1.5 rounded-lg text-zinc-400 hover:bg-zinc-100 dark:hover:bg-white/10 hover:text-zinc-700 dark:hover:text-white transition-colors"
           >
             <Menu className="w-5 h-5" />
           </button>
@@ -52,10 +52,19 @@ export function ClientLayout({ children }: { children: React.ReactNode }) {
             <div className="w-5 h-5 rounded bg-cyan-500 flex items-center justify-center">
               <span className="text-[9px] font-bold text-black">G</span>
             </div>
-            <span className="text-sm font-semibold text-white tracking-tight">
+            <span className="text-sm font-semibold text-zinc-900 dark:text-white tracking-tight">
               LLM Gateway
             </span>
           </div>
+        </div>
+
+        {/* Free beta banner */}
+        <div className="shrink-0 flex items-center justify-center gap-2 px-4 py-2 bg-cyan-500/10 border-b border-cyan-500/20 text-xs text-cyan-700 dark:text-cyan-400">
+          <span className="text-base">🎉</span>
+          <span>
+            <strong>Free while in beta</strong> — explore every feature at no cost.
+            Pricing will be introduced later.
+          </span>
         </div>
 
         {/* Content */}
