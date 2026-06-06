@@ -10,7 +10,7 @@ export function CursorSpotlight() {
     if (!el) return;
     // Direct DOM update — no setState so no re-render on every mouse move
     const onMove = (e: MouseEvent) => {
-      el.style.background = `radial-gradient(600px circle at ${e.clientX}px ${e.clientY}px, rgba(0,255,255,0.05), transparent 70%)`;
+      el.style.background = `radial-gradient(400px circle at ${e.clientX}px ${e.clientY}px, rgba(0,255,255,0.18), rgba(0,255,255,0.04) 50%, transparent 70%)`;
     };
     window.addEventListener("mousemove", onMove);
     return () => window.removeEventListener("mousemove", onMove);

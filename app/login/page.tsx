@@ -27,13 +27,9 @@ export default function LoginPage() {
     e.preventDefault();
     setError(null);
     setLoading(true);
-
     try {
       const supabase = createClient();
-      const { error: authError } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
+      const { error: authError } = await supabase.auth.signInWithPassword({ email, password });
       if (authError) throw new Error(authError.message);
       router.push("/overview");
       router.refresh();
@@ -44,44 +40,43 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#080808] flex items-center justify-center px-4 relative overflow-hidden">
-      {/* Cursor spotlight */}
+    <div className="min-h-screen flex relative overflow-hidden bg-[#080808]">
+      {/* Cursor spotlight — spans full page */}
       <CursorSpotlight />
 
       {/* Subtle dot grid */}
       <div
-        className="pointer-events-none absolute inset-0 opacity-20"
+        className="pointer-events-none absolute inset-0 z-[2] opacity-25"
         style={{
-          backgroundImage:
-            "radial-gradient(circle, rgba(255,255,255,0.08) 1px, transparent 1px)",
-          backgroundSize: "32px 32px",
+          backgroundImage: "radial-gradient(circle, rgba(255,255,255,0.1) 1px, transparent 1px)",
+          backgroundSize: "28px 28px",
         }}
       />
 
-      {/* Card */}
-      <motion.div
-        variants={container}
-        initial="hidden"
-        animate="visible"
-        className="relative z-30 w-full max-w-sm"
-      >
-        <div className="rounded-2xl border border-white/10 bg-white/[0.03] backdrop-blur-xl p-8 shadow-2xl">
+      {/* ── Left panel: form ─────────────────────────── */}
+      <div className="relative z-30 w-full md:w-1/2 flex flex-col items-center justify-center px-8 py-12 md:px-14">
+        <motion.div
+          variants={container}
+          initial="hidden"
+          animate="visible"
+          className="w-full max-w-sm"
+        >
           {/* Logo */}
-          <motion.div variants={item} className="mb-8">
+          <motion.div variants={item} className="mb-10">
             <Link href="/" className="text-base font-semibold text-white tracking-tight">
               LLM Gateway
             </Link>
           </motion.div>
 
           {/* Heading */}
-          <motion.div variants={item} className="mb-6">
-            <h1 className="text-xl font-semibold text-white">Welcome back</h1>
+          <motion.div variants={item} className="mb-8">
+            <h1 className="text-2xl font-semibold text-white">Welcome back</h1>
             <p className="text-sm text-white/40 mt-1">Sign in to your dashboard</p>
           </motion.div>
 
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-5">
             <motion.div variants={item} className="space-y-1.5">
-              <Label className="text-white/70 text-xs uppercase tracking-wide">
+              <Label className="text-white/60 text-xs uppercase tracking-widest font-medium">
                 Email
               </Label>
               <Input
@@ -91,12 +86,12 @@ export default function LoginPage() {
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="you@example.com"
                 disabled={loading}
-                className="bg-white/5 border-white/10 text-white placeholder:text-white/20 focus-visible:ring-cyan-500/50 focus-visible:border-white/20"
+                className="bg-white/5 border-white/10 text-white placeholder:text-white/20 focus-visible:ring-cyan-500/40 focus-visible:border-cyan-500/40 h-11"
               />
             </motion.div>
 
             <motion.div variants={item} className="space-y-1.5">
-              <Label className="text-white/70 text-xs uppercase tracking-wide">
+              <Label className="text-white/60 text-xs uppercase tracking-widest font-medium">
                 Password
               </Label>
               <Input
@@ -106,7 +101,7 @@ export default function LoginPage() {
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
                 disabled={loading}
-                className="bg-white/5 border-white/10 text-white placeholder:text-white/20 focus-visible:ring-cyan-500/50 focus-visible:border-white/20"
+                className="bg-white/5 border-white/10 text-white placeholder:text-white/20 focus-visible:ring-cyan-500/40 focus-visible:border-cyan-500/40 h-11"
               />
             </motion.div>
 
@@ -119,11 +114,11 @@ export default function LoginPage() {
               </motion.div>
             )}
 
-            <motion.div variants={item}>
+            <motion.div variants={item} className="pt-1">
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full flex items-center justify-center gap-2 rounded-lg bg-white text-black text-sm font-medium py-2.5 hover:bg-white/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors mt-2"
+                className="w-full flex items-center justify-center gap-2 rounded-lg bg-white text-black text-sm font-semibold h-11 hover:bg-white/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
                 {loading && <Loader2 className="w-4 h-4 animate-spin" />}
                 Continue
@@ -131,17 +126,27 @@ export default function LoginPage() {
             </motion.div>
           </form>
 
-          <motion.p
-            variants={item}
-            className="mt-6 text-center text-sm text-white/30"
-          >
+          <motion.p variants={item} className="mt-8 text-sm text-white/30 text-center">
             Don&apos;t have an account?{" "}
             <Link href="/signup" className="text-white/60 hover:text-white transition-colors">
               Sign up
             </Link>
           </motion.p>
-        </div>
-      </motion.div>
+        </motion.div>
+      </div>
+
+      {/* ── Right panel: image ────────────────────────── */}
+      <div className="hidden md:block relative w-1/2 shrink-0">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=900&q=80"
+          alt="Technology background"
+          className="absolute inset-0 h-full w-full object-cover"
+        />
+        {/* Blend left edge into the dark panel */}
+        <div className="absolute inset-0 bg-gradient-to-r from-[#080808] via-transparent to-transparent w-1/3" />
+        <div className="absolute inset-0 bg-black/30" />
+      </div>
     </div>
   );
 }

@@ -16,7 +16,6 @@ const container = {
   visible: { opacity: 1, transition: { staggerChildren: 0.07 } },
 };
 
-// Only this email can create an account. Set NEXT_PUBLIC_ALLOWED_EMAIL in Vercel.
 const ALLOWED_EMAIL = process.env.NEXT_PUBLIC_ALLOWED_EMAIL ?? "";
 
 export default function SignupPage() {
@@ -31,7 +30,6 @@ export default function SignupPage() {
     e.preventDefault();
     setError(null);
 
-    // Block anyone whose email isn't on the allowlist
     if (ALLOWED_EMAIL && email.toLowerCase() !== ALLOWED_EMAIL.toLowerCase()) {
       setError("Registration is closed. Contact the administrator.");
       return;
@@ -40,10 +38,7 @@ export default function SignupPage() {
     setLoading(true);
     try {
       const supabase = createClient();
-      const { data, error: authError } = await supabase.auth.signUp({
-        email,
-        password,
-      });
+      const { data, error: authError } = await supabase.auth.signUp({ email, password });
       if (authError) throw new Error(authError.message);
       if (data.session) {
         router.push("/overview");
@@ -62,12 +57,11 @@ export default function SignupPage() {
     return (
       <div className="min-h-screen bg-[#080808] flex items-center justify-center px-4 relative overflow-hidden">
         <CursorSpotlight />
-        <div className="relative z-30 w-full max-w-sm text-center rounded-2xl border border-white/10 bg-white/[0.03] backdrop-blur-xl p-10">
+        <div className="relative z-30 w-full max-w-sm text-center">
           <div className="text-3xl mb-4">📬</div>
           <h2 className="text-lg font-semibold text-white mb-2">Check your email</h2>
           <p className="text-sm text-white/40 mb-6">
             Confirmation link sent to <span className="text-white/70">{email}</span>.
-            Click it to activate your account.
           </p>
           <Link href="/login" className="text-sm text-white/60 hover:text-white transition-colors">
             Back to sign in →
@@ -78,40 +72,39 @@ export default function SignupPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#080808] flex items-center justify-center px-4 relative overflow-hidden">
+    <div className="min-h-screen flex relative overflow-hidden bg-[#080808]">
       <CursorSpotlight />
 
-      {/* Dot grid */}
       <div
-        className="pointer-events-none absolute inset-0 opacity-20"
+        className="pointer-events-none absolute inset-0 z-[2] opacity-25"
         style={{
-          backgroundImage:
-            "radial-gradient(circle, rgba(255,255,255,0.08) 1px, transparent 1px)",
-          backgroundSize: "32px 32px",
+          backgroundImage: "radial-gradient(circle, rgba(255,255,255,0.1) 1px, transparent 1px)",
+          backgroundSize: "28px 28px",
         }}
       />
 
-      <motion.div
-        variants={container}
-        initial="hidden"
-        animate="visible"
-        className="relative z-30 w-full max-w-sm"
-      >
-        <div className="rounded-2xl border border-white/10 bg-white/[0.03] backdrop-blur-xl p-8 shadow-2xl">
-          <motion.div variants={item} className="mb-8">
+      {/* Left panel */}
+      <div className="relative z-30 w-full md:w-1/2 flex flex-col items-center justify-center px-8 py-12 md:px-14">
+        <motion.div
+          variants={container}
+          initial="hidden"
+          animate="visible"
+          className="w-full max-w-sm"
+        >
+          <motion.div variants={item} className="mb-10">
             <Link href="/" className="text-base font-semibold text-white tracking-tight">
               LLM Gateway
             </Link>
           </motion.div>
 
-          <motion.div variants={item} className="mb-6">
-            <h1 className="text-xl font-semibold text-white">Create an account</h1>
+          <motion.div variants={item} className="mb-8">
+            <h1 className="text-2xl font-semibold text-white">Create an account</h1>
             <p className="text-sm text-white/40 mt-1">Get started with your gateway</p>
           </motion.div>
 
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-5">
             <motion.div variants={item} className="space-y-1.5">
-              <Label className="text-white/70 text-xs uppercase tracking-wide">
+              <Label className="text-white/60 text-xs uppercase tracking-widest font-medium">
                 Email
               </Label>
               <Input
@@ -121,12 +114,12 @@ export default function SignupPage() {
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="you@example.com"
                 disabled={loading}
-                className="bg-white/5 border-white/10 text-white placeholder:text-white/20 focus-visible:ring-cyan-500/50 focus-visible:border-white/20"
+                className="bg-white/5 border-white/10 text-white placeholder:text-white/20 focus-visible:ring-cyan-500/40 focus-visible:border-cyan-500/40 h-11"
               />
             </motion.div>
 
             <motion.div variants={item} className="space-y-1.5">
-              <Label className="text-white/70 text-xs uppercase tracking-wide">
+              <Label className="text-white/60 text-xs uppercase tracking-widest font-medium">
                 Password
               </Label>
               <Input
@@ -137,7 +130,7 @@ export default function SignupPage() {
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="Min. 6 characters"
                 disabled={loading}
-                className="bg-white/5 border-white/10 text-white placeholder:text-white/20 focus-visible:ring-cyan-500/50 focus-visible:border-white/20"
+                className="bg-white/5 border-white/10 text-white placeholder:text-white/20 focus-visible:ring-cyan-500/40 focus-visible:border-cyan-500/40 h-11"
               />
             </motion.div>
 
@@ -150,11 +143,11 @@ export default function SignupPage() {
               </motion.div>
             )}
 
-            <motion.div variants={item}>
+            <motion.div variants={item} className="pt-1">
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full flex items-center justify-center gap-2 rounded-lg bg-white text-black text-sm font-medium py-2.5 hover:bg-white/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors mt-2"
+                className="w-full flex items-center justify-center gap-2 rounded-lg bg-white text-black text-sm font-semibold h-11 hover:bg-white/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
                 {loading && <Loader2 className="w-4 h-4 animate-spin" />}
                 Create account
@@ -162,17 +155,26 @@ export default function SignupPage() {
             </motion.div>
           </form>
 
-          <motion.p
-            variants={item}
-            className="mt-6 text-center text-sm text-white/30"
-          >
+          <motion.p variants={item} className="mt-8 text-sm text-white/30 text-center">
             Already have an account?{" "}
             <Link href="/login" className="text-white/60 hover:text-white transition-colors">
               Sign in
             </Link>
           </motion.p>
-        </div>
-      </motion.div>
+        </motion.div>
+      </div>
+
+      {/* Right panel */}
+      <div className="hidden md:block relative w-1/2 shrink-0">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=900&q=80"
+          alt="Technology background"
+          className="absolute inset-0 h-full w-full object-cover"
+        />
+        <div className="absolute inset-0 bg-gradient-to-r from-[#080808] via-transparent to-transparent w-1/3" />
+        <div className="absolute inset-0 bg-black/30" />
+      </div>
     </div>
   );
 }
