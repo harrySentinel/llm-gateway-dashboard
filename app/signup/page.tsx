@@ -16,8 +16,6 @@ const container = {
   visible: { opacity: 1, transition: { staggerChildren: 0.07 } },
 };
 
-const ALLOWED_EMAIL = process.env.NEXT_PUBLIC_ALLOWED_EMAIL ?? "";
-
 export default function SignupPage() {
   const router = useRouter();
   const [email, setEmail] = useState("");
@@ -29,12 +27,6 @@ export default function SignupPage() {
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     setError(null);
-
-    if (ALLOWED_EMAIL && email.toLowerCase() !== ALLOWED_EMAIL.toLowerCase()) {
-      setError("Registration is closed. Contact the administrator.");
-      return;
-    }
-
     setLoading(true);
     try {
       const supabase = createClient();
